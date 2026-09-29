@@ -1,0 +1,174 @@
+---
+import { Font } from 'astro:assets';
+import darkTheme from 'highlight.js/styles/tokyo-night-dark.css?url';
+import lightTheme from 'highlight.js/styles/tokyo-night-light.css?url';
+import { PLAIN_TEXT } from '../lib/languages';
+import '../styles/global.css';
+
+interface Props {
+	/** Id of the paste being viewed, if any. */
+	pasteId?: string;
+	/** Paste content; omitted while the paste is locked. */
+	content?: string;
+	language?: string;
+	/** What to show instead of the editor. */
+	gate?: 'locked' | 'not-found';
+}
+
+const { pasteId, content = '', language = PLAIN_TEXT.id, gate } = Astro.props;
+// Saved pastes are immutable: viewing one locks the editor and its controls.
+const readOnly = pasteId !== undefined;
+// HTML drops a leading newline inside <textarea>; feed it a sacrificial one.
+const leadingNewline = '\n';
+const title = pasteId ? `Pastes · ${pasteId}` : 'Pastes';
+
+const card = 'bg-zinc-100 dark:bg-zinc-800 rounded-none border border-zinc-300 dark:border-zinc-700';
+const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500';
+const control = `${card} h-9 px-3 text-sm dark:text-white ${focusRing} disabled:opacity-50`;
+const button = `${control} inline-flex items-center gap-2 whitespace-nowrap cursor-pointer active:opacity-75 duration-100 disabled:cursor-default`;
+// Shared by the highlight layer and the textarea so their glyphs line up exactly.
+const editorText = 'm-0 p-4 [font-family:inherit] text-sm leading-6 whitespace-pre [tab-size:4] [font-variant-ligatures:none]';
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<title>{title}</title>
+		<Font cssVariable="--font-jetbrains" preload />
+		<link rel="stylesheet" href={lightTheme} media="(prefers-color-scheme: light)" />
+		<link rel="stylesheet" href={darkTheme} media="(prefers-color-scheme: dark)" />
+	</head>
+	<body class="flex h-dvh flex-col bg-white antialiased dark:bg-zinc-900 dark:text-white">
+		<nav class="bg-white dark:bg-zinc-900">
+			<div class="flex flex-wrap items-center gap-2 p-4">
+				<a href="/" class="mr-auto text-2xl font-semibold whitespace-nowrap italic dark:text-white">Pastes</a>
+
+				<a href="/" id="new-paste" class={button}>
+					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
+					New Paste
+				</a>
+				<button type="button" id="save-paste" class={button} title="Save (Ctrl+S)" disabled={readOnly}>
+					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><path d="M17 21v-8H7v8" /><path d="M7 3v5h8" /></svg>
+					Save Paste
+				</button>
+
+				<div class="relative" id="language-picker">
+					<button
+						type="button"
+						id="language-button"
+						disabled={readOnly}
+						class={`${button} w-48 justify-between`}
+						aria-haspopup="listbox"
+						aria-expanded="false"
+						aria-controls="language-panel"
+					>
+						<span class="sr-only">Language:</span>
+						<span id="language-label" class="truncate">{PLAIN_TEXT.name}</span>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+					</button>
+					<div id="language-panel" class={`${card} absolute top-full right-0 z-50 mt-1 w-64 max-w-[calc(100vw-2rem)]`} hidden>
+						<input
+							id="language-search"
+							type="text"
+							role="combobox"
+							aria-label="Search languages"
+							aria-expanded="true"
+							aria-controls="language-list"
+							aria-autocomplete="list"
+							autocomplete="off"
+							spellcheck="false"
+							placeholder="Search languages…"
+							class="w-full border-b border-zinc-300 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-zinc-400 dark:border-zinc-700 dark:placeholder:text-zinc-500"
+						/>
+						<ul id="language-list" role="listbox" aria-label="Languages" class="max-h-64 overflow-y-auto py-1 text-sm"></ul>
+					</div>
+				</div>
+
+				<label class="sr-only" for="paste-password">Password (optional)</label>
+				<input
+					id="paste-password"
+					disabled={readOnly}
+					type="password"
+					autocomplete="new-password"
+					placeholder="Password (optional)"
+					class={`${control} w-48 placeholder:text-zinc-400 dark:placeholder:text-zinc-500`}
+				/>
+			</div>
+		</nav>
+
+		<main
+			id="app"
+			class="flex min-h-0 flex-1 flex-col px-4 pb-4"
+			data-paste-id={pasteId}
+			data-language={language}
+		>
+			{
+				gate === 'locked' && (
+					<div id="gate" class="grid flex-1 place-items-center">
+						<form id="unlock-form" class={`${card} flex w-full max-w-sm flex-col gap-3 p-4`}>
+							<div>
+								<div class="dark:text-white">This paste is password protected</div>
+								<p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Enter the password to view it.</p>
+							</div>
+							<label class="sr-only" for="unlock-password">Password</label>
+							<input
+								id="unlock-password"
+								type="password"
+								autocomplete="current-password"
+								placeholder="Password"
+								required
+								autofocus
+								class={`${control} bg-white placeholder:text-zinc-400 dark:bg-zinc-900 dark:placeholder:text-zinc-500`}
+							/>
+							<p id="unlock-error" class="text-sm text-zinc-600 dark:text-zinc-400" role="alert" hidden />
+							<button type="submit" class={`${button} justify-center`}>Unlock</button>
+						</form>
+					</div>
+				)
+			}
+			{
+				gate === 'not-found' && (
+					<div id="gate" class="grid flex-1 place-items-center">
+						<div class={`${card} w-full max-w-sm p-4`}>
+							<div class="dark:text-white">Paste not found</div>
+							<p class="mt-1 text-zinc-600 dark:text-zinc-400">
+								It may have never existed.{' '}
+								<a href="/" class="font-semibold text-blue-500 underline duration-200 hover:text-blue-700">Start a new paste</a>.
+							</p>
+						</div>
+					</div>
+				)
+			}
+
+			<div id="editor" class={`${card} relative min-h-0 flex-1 overflow-auto`} hidden={gate !== undefined}>
+				<!-- The textarea and highlight layer share one grid cell; the <pre> sizes it, the textarea fills it. -->
+				<div class="grid min-h-full w-max min-w-full">
+					<pre id="highlight" aria-hidden="true" class={`${editorText} pointer-events-none [grid-area:1/1] text-zinc-800 dark:text-zinc-200`}><code id="highlight-code" class="[font:inherit]">{content}</code></pre>
+					<textarea
+						id="paste-input"
+						aria-label="Paste content"
+						placeholder="Paste or type something…"
+						wrap="off"
+						spellcheck="false"
+						autocapitalize="off"
+						autocomplete="off"
+						autofocus={gate === undefined}
+						readonly={readOnly}
+						class={`${editorText} resize-none overflow-hidden border-0 bg-transparent text-transparent caret-black outline-none [grid-area:1/1] placeholder:text-zinc-400 selection:bg-zinc-300 dark:caret-white dark:placeholder:text-zinc-500 dark:selection:bg-zinc-600`}
+					>{leadingNewline + content}</textarea>
+				</div>
+			</div>
+
+			<div class="flex justify-between gap-4 pt-2 text-xs text-zinc-500">
+				<span id="status" role="status" aria-live="polite" class="truncate"></span>
+				<span id="meta" class="whitespace-nowrap"></span>
+			</div>
+		</main>
+
+		<script>
+			import '../scripts/editor';
+		</script>
+	</body>
+</html>

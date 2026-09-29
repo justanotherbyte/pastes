@@ -1,43 +1,28 @@
-# Astro Starter Kit: Minimal
+# Pastes
+
+A small pastebin on Astro + Cloudflare Workers + D1, with highlight.js syntax highlighting.
+
+## Setup
 
 ```sh
-npm create astro@latest -- --template minimal
+npm install
+npm run db:migrate:local   # create the pastes table in the local D1 database
+npm run dev
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Deploying
 
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+```sh
+npx wrangler d1 create pastes      # copy the printed database_id into wrangler.jsonc
+npm run db:migrate:remote
+npm run deploy
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## How it works
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
-
-Any static assets, like images, can be placed in the `public/` directory.
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+- `POST /api/pastes` `{ content, language, password? }` → `{ id }` (6-char alphanumeric id).
+- `GET /:id` renders the paste, or a password prompt if it's protected.
+- `POST /api/pastes/:id/unlock` `{ password }` → `{ content, language }`.
+- Passwords are hashed with PBKDF2-SHA256 (100k iterations, 16-byte random salt).
+- The language list comes from highlight.js at build time (`astro.config.mjs`); grammars are lazy-loaded per language in the browser.
+- Pastes are immutable: saving an edited paste creates a new one.

@@ -1,0 +1,24 @@
+---
+import PasteApp from '../components/PasteApp.astro';
+import { isPasteId } from '../lib/crypto';
+import { getPaste } from '../lib/pastes';
+
+export const prerender = false;
+
+const id = Astro.params.id ?? '';
+const paste = isPasteId(id) ? await getPaste(id) : null;
+
+if (!paste) Astro.response.status = 404;
+// Pastes never change, but a locked one must not leak through a shared cache.
+Astro.response.headers.set('Cache-Control', 'private, no-store');
+---
+
+{
+	!paste ? (
+		<PasteApp gate="not-found" />
+	) : paste.password_hash ? (
+		<PasteApp pasteId={paste.paste_id} gate="locked" />
+	) : (
+		<PasteApp pasteId={paste.paste_id} content={paste.content} language={paste.language} />
+	)
+}

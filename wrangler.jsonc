@@ -1,0 +1,23 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "pastes",
+	"main": "@astrojs/cloudflare/entrypoints/server",
+	"compatibility_date": "2026-09-01",
+	"compatibility_flags": ["nodejs_compat"],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "pastes",
+			"database_id": "837efc0c-26d9-4a99-abc3-179d7795c1fd",
+			"migrations_dir": "migrations"
+		}
+	],
+	"ratelimits": [
+		{
+			// POST /api/pastes: 10 new pastes per minute per client IP.
+			"name": "CREATE_RATE_LIMITER",
+			"namespace_id": "1001",
+			"simple": { "limit": 10, "period": 60 }
+		}
+	]
+}
