@@ -43,23 +43,36 @@ const editorText = 'm-0 p-4 [font-family:inherit] text-sm leading-6 whitespace-p
 	<body class="flex h-dvh flex-col bg-white antialiased dark:bg-zinc-900 dark:text-white">
 		<nav class="bg-white dark:bg-zinc-900">
 			<div class="flex flex-wrap items-center gap-2 p-4">
-				<a href="/" class="mr-auto text-2xl font-semibold whitespace-nowrap italic dark:text-white">Pastes</a>
+				<!-- Below lg the brand row spans the width (GitHub icon on its right); at lg it dissolves into one toolbar row. -->
+				<div class="flex w-full items-center lg:contents">
+					<a href="/" class="mr-auto text-2xl font-semibold whitespace-nowrap italic dark:text-white">Pastes</a>
+					<a
+						href="https://github.com/justanotherbyte/pastes"
+						target="_blank"
+						rel="noopener noreferrer"
+						class={`${button} w-9 justify-center px-0 lg:order-last`}
+						title="Source on GitHub"
+					>
+						<svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z" /></svg>
+						<span class="sr-only">Source on GitHub</span>
+					</a>
+				</div>
 
 				<a href="/" id="new-paste" class={button}>
 					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
-					New Paste
+					<span class="sr-only sm:not-sr-only">New Paste</span>
 				</a>
 				<button type="button" id="save-paste" class={button} title="Save (Ctrl+S)" disabled={readOnly}>
 					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><path d="M17 21v-8H7v8" /><path d="M7 3v5h8" /></svg>
-					Save Paste
+					<span class="sr-only sm:not-sr-only">Save Paste</span>
 				</button>
 
-				<div class="relative" id="language-picker">
+				<div class="relative min-w-0 flex-1 sm:flex-none" id="language-picker">
 					<button
 						type="button"
 						id="language-button"
 						disabled={readOnly}
-						class={`${button} w-48 justify-between`}
+						class={`${button} w-full justify-between sm:w-48`}
 						aria-haspopup="listbox"
 						aria-expanded="false"
 						aria-controls="language-panel"
@@ -93,7 +106,7 @@ const editorText = 'm-0 p-4 [font-family:inherit] text-sm leading-6 whitespace-p
 					type="password"
 					autocomplete="new-password"
 					placeholder="Password (optional)"
-					class={`${control} w-48 placeholder:text-zinc-400 dark:placeholder:text-zinc-500`}
+					class={`${control} w-full placeholder:text-zinc-400 sm:w-48 dark:placeholder:text-zinc-500`}
 				/>
 			</div>
 		</nav>

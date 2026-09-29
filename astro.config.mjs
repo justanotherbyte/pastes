@@ -22,6 +22,8 @@ export default defineConfig({
 	session: false,
 	vite: {
 		plugins: [tailwindcss()],
+		// Pre-bundle up front; discovering it late leaves stale dep-cache hashes after dev restarts.
+		optimizeDeps: { include: ['highlight.js/lib/core'] },
 		define: {
 			__HLJS_LANGUAGES__: JSON.stringify(languages),
 		},
